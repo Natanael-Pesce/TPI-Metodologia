@@ -2,6 +2,7 @@ package Tpi_Metodologia.API.services.interfaces;
 
 import Tpi_Metodologia.API.dtos.response.EnvioResponseDto;
 import Tpi_Metodologia.API.utility.EstadoEnvio;
+import Tpi_Metodologia.API.dtos.update.EnvioUpdateDto;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ public interface IEnvioService {
 
     List<EnvioResponseDto> listarPorEstado(EstadoEnvio estado);
 
-    /** Actualiza el estado del envío y opcionalmente el tracking */
     EnvioResponseDto actualizarEstado(int envioID, EstadoEnvio nuevoEstado, String tracking);
+
+    EnvioResponseDto update(int envioID, EnvioUpdateDto dto);
 }

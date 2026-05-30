@@ -211,6 +211,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         dto.setNombre(u.getNombre());
         dto.setApellido(u.getApellido());
         dto.setCorreo(u.getCorreo());
+        dto.setRol(u.getRol());
         return dto;
     }
 }

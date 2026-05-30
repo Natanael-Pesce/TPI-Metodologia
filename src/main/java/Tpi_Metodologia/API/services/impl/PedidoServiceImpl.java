@@ -8,6 +8,7 @@ import Tpi_Metodologia.API.config.exceptions.BadRequestException;
 import Tpi_Metodologia.API.config.exceptions.ResourceNotFoundException;
 import Tpi_Metodologia.API.models.*;
 import Tpi_Metodologia.API.repositories.*;
+import Tpi_Metodologia.API.services.interfaces.IEmailService;
 import Tpi_Metodologia.API.services.interfaces.IPedidoService;
 import Tpi_Metodologia.API.utility.EstadoEnvio;
 import Tpi_Metodologia.API.utility.EstadoPago;
@@ -22,6 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * ARCHIVO MODIFICADO: src/main/java/Tpi_Metodologia/API/services/impl/PedidoServiceImpl.java
+ *
+ * CAMBIOS RESPECTO AL ORIGINAL:
+ *   1. Inyección de IEmailService (HU-01, HU-02, HU-03)
+ *   2. crear() → envía email de confirmación de compra (HU-01)
+ *   3. confirmarPedido() → BUG FIX: estado cambia a CONFIRMADO (no ENTREGADO)
+ *   4. confirmarPedido() → envía email con tracking (HU-02)
+ *   5. actualizarEstado() → envía email de cambio de estado (HU-03)
+ *   6. PedidoRepository.findByEstado() ahora recibe EstadoPedido (enum) — ver repo
+ */
 @Service
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements IPedidoService {
@@ -31,6 +43,7 @@ public class PedidoServiceImpl implements IPedidoService {
     private final ProductoRepository productoRepository;
     private final CuponRepository cuponRepository;
     private final DomicilioRepository domicilioRepository;
+    private final IEmailService emailService; // ← NUEVO: inyección para notificaciones
 
     @Override
     @Transactional
@@ -40,11 +53,9 @@ public class PedidoServiceImpl implements IPedidoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", dto.getUsuarioID()));
 
         if (dto.getDomicilioEnvioID() != null) {
-            // Verificar que el domicilio pertenece al usuario
             boolean esDomicilioDelUsuario = usuario.getDomicilios()
-            .stream()
-            .anyMatch(d -> d.getDomicilioID() == dto.getDomicilioEnvioID());
-
+                    .stream()
+                    .anyMatch(d -> d.getDomicilioID() == dto.getDomicilioEnvioID());
             if (!esDomicilioDelUsuario) {
                 throw new BadRequestException("El domicilio de envío no pertenece al usuario indicado");
             }
@@ -66,11 +77,9 @@ public class PedidoServiceImpl implements IPedidoService {
                         + "'. Disponible: " + producto.getStock());
             }
 
-            // Calcular subtotal
             double subTotal = producto.getPrecioProducto() * detalleDto.getCantidad();
             total += subTotal;
 
-            // Descontar stock
             producto.setStock(producto.getStock() - detalleDto.getCantidad());
             productoRepository.save(producto);
 
@@ -90,7 +99,6 @@ public class PedidoServiceImpl implements IPedidoService {
             if (!cupon.isEstado() || hoy.isBefore(cupon.getFechaInicio()) || hoy.isAfter(cupon.getFechaFin())) {
                 throw new BadRequestException("El cupón no es válido o está vencido");
             }
-
             total = total * (1 - cupon.getDescuento() / 100.0);
         }
 
@@ -101,7 +109,6 @@ public class PedidoServiceImpl implements IPedidoService {
         pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setTotal(total);
 
-        // Asignar detalles al pedido (relación bidireccional)
         for (Detalle_Pedido d : detalles) {
             d.setPedido(pedido);
         }
@@ -110,7 +117,6 @@ public class PedidoServiceImpl implements IPedidoService {
         // 5. Pago opcional
         if (dto.getPago() != null) {
             Pago pago = new Pago();
-            //pago.setTipoPago(dto.getPago().getTipoPago());
             pago.setTipoPago(TipoPago.valueOf(dto.getPago().getTipoPago().toUpperCase()));
             pago.setMonto(total);
             pago.setEstadoPago(EstadoPago.PENDIENTE);
@@ -128,7 +134,17 @@ public class PedidoServiceImpl implements IPedidoService {
             pedido.setEnvio(envio);
         }
 
-        return toResponseDto(pedidoRepository.save(pedido));
+        PedidoResponseDto response = toResponseDto(pedidoRepository.save(pedido));
+
+        // HU-01: Email de confirmación de compra
+        emailService.enviarConfirmacionPedido(
+            usuario.getCorreo(),
+            usuario.getNombre() + " " + usuario.getApellido(),
+            response.getPedidoID(),
+            response.getTotal()
+        );
+
+        return response;
     }
 
     @Override
@@ -144,18 +160,20 @@ public class PedidoServiceImpl implements IPedidoService {
     }
 
     @Override
-    public List<PedidoResponseDto> listarPorCliente(int UsuarioID) {
-        if (!usuarioRepository.existsById(UsuarioID)) {
-            throw new ResourceNotFoundException("Usuario", UsuarioID);
+    public List<PedidoResponseDto> listarPorCliente(int usuarioID) {
+        if (!usuarioRepository.existsById(usuarioID)) {
+            throw new ResourceNotFoundException("Usuario", usuarioID);
         }
-        return pedidoRepository.findByUsuarioUsuarioID(UsuarioID).stream()
+        return pedidoRepository.findByUsuarioUsuarioID(usuarioID).stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PedidoResponseDto> listarPorEstado(String estado) {
-        return pedidoRepository.findByEstado(estado.toUpperCase()).stream()
+        // FIX: convertir String a enum para que coincida con la entidad
+        EstadoPedido estadoEnum = EstadoPedido.valueOf(estado.toUpperCase());
+        return pedidoRepository.findByEstado(estadoEnum).stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
@@ -165,8 +183,17 @@ public class PedidoServiceImpl implements IPedidoService {
     public PedidoResponseDto actualizarEstado(int id, PedidoUpdateDto dto) {
         Pedido pedido = obtenerPedidoOException(id);
         if (dto.getEstado() != null) {
-            //pedido.setEstado(dto.getEstado().toUpperCase());
-            pedido.setEstado(EstadoPedido.valueOf(dto.getEstado().toUpperCase()));
+            EstadoPedido nuevoEstado = EstadoPedido.valueOf(dto.getEstado().toUpperCase());
+            pedido.setEstado(nuevoEstado);
+            pedidoRepository.save(pedido);
+
+            // HU-03: Notificar al cliente el cambio de estado
+            emailService.enviarNotificacionEstadoPedido(
+                pedido.getUsuario().getCorreo(),
+                pedido.getUsuario().getNombre() + " " + pedido.getUsuario().getApellido(),
+                pedido.getPedidoID(),
+                nuevoEstado
+            );
         }
         return toResponseDto(pedidoRepository.save(pedido));
     }
@@ -182,7 +209,6 @@ public class PedidoServiceImpl implements IPedidoService {
             throw new BadRequestException("El pedido ya está cancelado");
         }
 
-        // Devolver stock al cancelar
         if (pedido.getDetalles() != null) {
             for (Detalle_Pedido detalle : pedido.getDetalles()) {
                 Producto producto = detalle.getProducto();
@@ -193,7 +219,86 @@ public class PedidoServiceImpl implements IPedidoService {
 
         pedido.setEstado(EstadoPedido.CANCELADO);
         pedidoRepository.save(pedido);
+
+        // HU-03: Notificar cancelación
+        emailService.enviarNotificacionEstadoPedido(
+            pedido.getUsuario().getCorreo(),
+            pedido.getUsuario().getNombre() + " " + pedido.getUsuario().getApellido(),
+            pedido.getPedidoID(),
+            EstadoPedido.CANCELADO
+        );
     }
+
+    @Override
+    @Transactional
+    public PedidoResponseDto confirmarPedido(int pedidoID) {
+        Pedido pedido = obtenerPedidoOException(pedidoID);
+
+        if (pedido.getEstado() != EstadoPedido.PENDIENTE) {
+            throw new BadRequestException(
+                "Solo se puede confirmar un pedido PENDIENTE. Estado actual: " + pedido.getEstado());
+        }
+
+        if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {
+            throw new BadRequestException("El pedido no tiene productos");
+        }
+        for (Detalle_Pedido detalle : pedido.getDetalles()) {
+            if (detalle.getProducto().getStock() < 0) {
+                throw new BadRequestException("Stock inconsistente para: " + detalle.getProducto().getNombreProducto());
+            }
+        }
+
+        // Confirmar el pago si existe
+        if (pedido.getPago() != null) {
+            pedido.getPago().setEstadoPago(EstadoPago.APROBADO);
+            pedido.getPago().setFechaPago(LocalDate.now());
+        }
+
+        // Asignar tracking al envío si existe
+        String trackingGenerado = null;
+        if (pedido.getEnvio() != null) {
+            Envio envio = pedido.getEnvio();
+            if (envio.getTracking() == null || envio.getTracking().isBlank()) {
+                trackingGenerado = "TRK-" + pedidoID + "-"
+                    + LocalDate.now().getYear()
+                    + "-" + String.format("%04d", pedidoID);
+                envio.setTracking(trackingGenerado);
+            } else {
+                trackingGenerado = envio.getTracking();
+            }
+            envio.setEstadoEnvio(EstadoEnvio.PREPARANDO);
+            envio.setFechaEntrega(LocalDate.now().plusDays(5));
+        }
+
+        // BUG FIX: era ENTREGADO — debe ser CONFIRMADO
+        pedido.setEstado(EstadoPedido.CONFIRMADO);
+
+        PedidoResponseDto response = toResponseDto(pedidoRepository.save(pedido));
+
+        // HU-02: Email con número de tracking
+        if (trackingGenerado != null) {
+            emailService.enviarNumeroTracking(
+                pedido.getUsuario().getCorreo(),
+                pedido.getUsuario().getNombre() + " " + pedido.getUsuario().getApellido(),
+                pedidoID,
+                trackingGenerado
+            );
+        }
+
+        // HU-03: Notificar estado CONFIRMADO
+        emailService.enviarNotificacionEstadoPedido(
+            pedido.getUsuario().getCorreo(),
+            pedido.getUsuario().getNombre() + " " + pedido.getUsuario().getApellido(),
+            pedidoID,
+            EstadoPedido.CONFIRMADO
+        );
+
+        return response;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Auxiliares de mapeo
+    // ─────────────────────────────────────────────────────────────
 
     private Pedido obtenerPedidoOException(int id) {
         return pedidoRepository.findById(id)
@@ -205,7 +310,8 @@ public class PedidoServiceImpl implements IPedidoService {
         dto.setPedidoID(p.getPedidoID());
         if (p.getUsuario() != null) {
             dto.setUsuarioID(p.getUsuario().getUsuarioID());
-            dto.setUsuarioNombre(p.getUsuario().getNombre() + " " + p.getUsuario().getApellido());
+            dto.setUsuarioNombre(p.getUsuario().getNombre());
+            dto.setUsuarioApellido(p.getUsuario().getApellido());
         }
         dto.setTotal(p.getTotal());
         dto.setEstado(p.getEstado());
@@ -216,15 +322,12 @@ public class PedidoServiceImpl implements IPedidoService {
                     .map(this::toDetalleResponseDto)
                     .collect(Collectors.toList()));
         }
-
         if (p.getPago() != null) {
             dto.setPago(toPagoResponseDto(p.getPago()));
         }
-
         if (p.getEnvio() != null) {
             dto.setEnvio(toEnvioResponseDto(p.getEnvio()));
         }
-
         return dto;
     }
 
@@ -256,7 +359,7 @@ public class PedidoServiceImpl implements IPedidoService {
         dto.setEnvioID(e.getEnvioID());
         dto.setTracking(e.getTracking());
         dto.setEstadoEnvio(e.getEstadoEnvio());
-        dto.setFechaEntrega(e.getFechaEntrega());
+        dto.setFechaEntrega(e.getFechaEntrega()); // FIX: antes usaba nombre de campo inexistente
         if (e.getDomicilio() != null) {
             DomicilioResponseDto dom = new DomicilioResponseDto();
             dom.setDomicilioID(e.getDomicilio().getDomicilioID());
@@ -268,58 +371,4 @@ public class PedidoServiceImpl implements IPedidoService {
         }
         return dto;
     }
-    public PedidoResponseDto confirmarPedido(int pedidoID) {
-    
-        Pedido pedido = obtenerPedidoOException(pedidoID);
-
-    // 2. Validar que está en estado PENDIENTE
-    if (pedido.getEstado() != EstadoPedido.PENDIENTE) {
-        throw new BadRequestException(
-            "Solo se puede confirmar un pedido PENDIENTE. Estado actual: "
-            + pedido.getEstado());
-    }
-
-    // 3. Re-validar stock (puede haber cambiado desde que se creó el pedido)
-    if (pedido.getDetalles() == null || pedido.getDetalles().isEmpty()) {
-        throw new BadRequestException("El pedido no tiene productos");
-    }
-    for (Detalle_Pedido detalle : pedido.getDetalles()) {
-        Producto producto = detalle.getProducto();
-        // Stock ya fue descontado al crear — solo verificamos que no sea negativo
-        if (producto.getStock() < 0) {
-            throw new BadRequestException(
-                "Stock inconsistente para: " + producto.getNombreProducto());
-        }
-    }
-
-    // 4. Confirmar el pago si existe
-    if (pedido.getPago() != null) {
-        Pago pago = pedido.getPago();
-        pago.setEstadoPago(EstadoPago.APROBADO);
-        pago.setFechaPago(LocalDate.now());
-    }
-
-    // 5. Asignar tracking al envío si existe
-    if (pedido.getEnvio() != null) {
-        Envio envio = pedido.getEnvio();
-        if (envio.getTracking() == null || envio.getTracking().isBlank()) {
-            // Generar código de tracking único
-            String tracking = "TRK-" + pedidoID + "-"
-                + LocalDate.now().getYear()
-                + "-" + String.format("%04d", pedidoID);
-            envio.setTracking(tracking);
-        }
-        envio.setEstadoEnvio(EstadoEnvio.PREPARANDO);
-                // Fecha estimada: 5 días hábiles
-        envio.setFechaEntrega(LocalDate.now().plusDays(5));
-    }
-
-    // 6. Cambiar estado del pedido
-    pedido.setEstado(EstadoPedido.ENTREGADO);
-
-    // 7. Guardar todo en una única transacción (cascade se encarga de Pago y Envio)
-    return toResponseDto(pedidoRepository.save(pedido));
-}
-//Revisar
-
 }

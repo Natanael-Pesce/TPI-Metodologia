@@ -1,6 +1,8 @@
 package Tpi_Metodologia.API.repositories;
 
 import Tpi_Metodologia.API.models.Pedido;
+import Tpi_Metodologia.API.utility.EstadoPedido;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,8 +15,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
     List<Pedido> findByUsuarioUsuarioID(int usuarioID);
 
     // Pedidos por estado (PENDIENTE, CONFIRMADO, etc.)
-    List<Pedido> findByEstado(String estado);
+    List<Pedido> findByEstado(EstadoPedido estado);
 
     // Pedidos de un cliente por estado
-    List<Pedido> findByUsuarioUsuarioIDAndEstado(int usuarioID, String estado);
+    List<Pedido> findByUsuarioUsuarioIDAndEstado(int usuarioID, EstadoPedido estado);
 }

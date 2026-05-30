@@ -3,6 +3,8 @@ package Tpi_Metodologia.API.services.controllers;
 import Tpi_Metodologia.API.dtos.response.EnvioResponseDto;
 import Tpi_Metodologia.API.services.interfaces.IEnvioService;
 import Tpi_Metodologia.API.utility.EstadoEnvio;
+import Tpi_Metodologia.API.dtos.update.EnvioUpdateDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,5 +49,11 @@ public class EnvioController {
             @RequestParam(required = false) String tracking) {
         return ResponseEntity.ok(envioService.actualizarEstado(id, estado, tracking));
     }
-}
 
+    @PatchMapping("/{id}")
+    public ResponseEntity<EnvioResponseDto> update(
+            @PathVariable int id,
+            @Valid @RequestBody EnvioUpdateDto dto) {
+        return ResponseEntity.ok(envioService.update(id, dto));
+    }
+}

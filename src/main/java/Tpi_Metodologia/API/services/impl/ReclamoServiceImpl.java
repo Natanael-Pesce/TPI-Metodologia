@@ -2,6 +2,7 @@ package Tpi_Metodologia.API.services.impl;
 
 import Tpi_Metodologia.API.dtos.registrar.ReclamoRegistroDto;
 import Tpi_Metodologia.API.dtos.response.ReclamoResponseDto;
+import Tpi_Metodologia.API.dtos.update.ReclamoUpdateDto;
 import Tpi_Metodologia.API.config.exceptions.BadRequestException;
 import Tpi_Metodologia.API.config.exceptions.ResourceNotFoundException;
 import Tpi_Metodologia.API.models.Pedido;
@@ -10,6 +11,7 @@ import Tpi_Metodologia.API.models.Usuario;
 import Tpi_Metodologia.API.repositories.PedidoRepository;
 import Tpi_Metodologia.API.repositories.ReclamoRepository;
 import Tpi_Metodologia.API.services.interfaces.IReclamoService;
+import Tpi_Metodologia.API.utility.EstadoPedido;
 import Tpi_Metodologia.API.utility.EstadoReclamo;
 import Tpi_Metodologia.API.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,13 +39,11 @@ public class ReclamoServiceImpl implements IReclamoService {
         Pedido pedido = pedidoRepository.findById(dto.getPedidoID())
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido", dto.getPedidoID()));
 
-        // Validar que el pedido pertenece al cliente
         if (pedido.getUsuario().getUsuarioID() != dto.getUsuarioID()) {
             throw new BadRequestException("El pedido no pertenece al cliente indicado");
         }
 
-        // Validar que el pedido está en un estado reclamable
-        if ("CANCELADO".equals(pedido.getEstado()) || "PENDIENTE".equals(pedido.getEstado())) {
+        if (pedido.getEstado() == EstadoPedido.CANCELADO || pedido.getEstado() == EstadoPedido.PENDIENTE) {
             throw new BadRequestException("No se puede reclamar un pedido en estado " + pedido.getEstado());
         }
 
@@ -73,7 +73,7 @@ public class ReclamoServiceImpl implements IReclamoService {
     @Override
     public List<ReclamoResponseDto> listarPorCliente(int usuarioID) {
         if (!usuarioRepository.existsById(usuarioID)) {
-            throw new ResourceNotFoundException("usuario", usuarioID);
+            throw new ResourceNotFoundException("Usuario", usuarioID);
         }
         return reclamoRepository.findByUsuarioUsuarioID(usuarioID).stream()
                 .map(this::toResponseDto)
@@ -82,7 +82,8 @@ public class ReclamoServiceImpl implements IReclamoService {
 
     @Override
     public List<ReclamoResponseDto> listarPorEstado(String estado) {
-        return reclamoRepository.findByEstado(estado.toUpperCase()).stream()
+        EstadoReclamo estadoEnum = EstadoReclamo.valueOf(estado.toUpperCase());
+        return reclamoRepository.findByEstado(estadoEnum).stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
     }
@@ -94,6 +95,40 @@ public class ReclamoServiceImpl implements IReclamoService {
         reclamo.setEstado(EstadoReclamo.valueOf(nuevoEstado.toUpperCase()));
         return toResponseDto(reclamoRepository.save(reclamo));
     }
+
+    @Override
+    @Transactional
+    public ReclamoResponseDto update(int id, ReclamoUpdateDto dto) {
+        Reclamo reclamo = obtenerReclamoOException(id);
+
+        // No se puede modificar un reclamo ya cerrado
+        if (reclamo.getEstado() == EstadoReclamo.CERRADO) {
+            throw new BadRequestException("No se puede modificar un reclamo en estado CERRADO");
+        }
+
+        if (dto.getMotivo() != null && !dto.getMotivo().isBlank()) {
+            reclamo.setMotivo(dto.getMotivo());
+        }
+        if (dto.getTipo() != null && !dto.getTipo().isBlank()) {
+            reclamo.setTipo(dto.getTipo());
+        }
+        if (dto.getEstado() != null && !dto.getEstado().isBlank()) {
+            EstadoReclamo nuevoEstado;
+            try {
+                nuevoEstado = EstadoReclamo.valueOf(dto.getEstado().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Estado de reclamo inválido: " + dto.getEstado()
+                    + ". Valores válidos: ABIERTO, EN_PROCESO, RESUELTO, CERRADO");
+            }
+            reclamo.setEstado(nuevoEstado);
+        }
+
+        return toResponseDto(reclamoRepository.save(reclamo));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Auxiliares
+    // ─────────────────────────────────────────────────────────────
 
     private Reclamo obtenerReclamoOException(int id) {
         return reclamoRepository.findById(id)
