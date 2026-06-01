@@ -35,13 +35,13 @@ public class PagoServiceImpl implements IPagoService {
     @Override
     public List<PagoResponseDto> listarTodos() {
         return pagoRepository.findAll().stream()
-                .map(this::toDto).collect(Collectors.toList());
+            .map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
     public List<PagoResponseDto> listarPorEstado(EstadoPago estado) {
         return pagoRepository.findByEstadoPago(estado).stream()
-                .map(this::toDto).collect(Collectors.toList());
+            .map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -93,9 +93,11 @@ public class PagoServiceImpl implements IPagoService {
         return toDto(pagoRepository.save(pago));
     }
 
+    //Revisar
+
     private Pago obtenerOException(int id) {
         return pagoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pago", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Pago", id));
     }
 
     private PagoResponseDto toDto(Pago p) {

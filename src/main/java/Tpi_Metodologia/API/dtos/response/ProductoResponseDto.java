@@ -2,9 +2,6 @@ package Tpi_Metodologia.API.dtos.response;
 
 import lombok.Data;
 
-/**
- * NUEVO: Response DTO para Producto.
- */
 @Data
 public class ProductoResponseDto {
 

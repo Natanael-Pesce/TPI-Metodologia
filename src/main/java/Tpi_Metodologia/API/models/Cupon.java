@@ -24,10 +24,10 @@ public class Cupon {
     private List<Usuario> clientes;
 
     @Column(unique = true, nullable = false)
-    private String codigo; // Cambiado de int a String ("VERANO20" > 1234)
+    private String codigo;
 
     @Column(nullable = false)
-    private int descuento; // porcentaje 0-100
+    private int descuento;
 
     private boolean estado;
 

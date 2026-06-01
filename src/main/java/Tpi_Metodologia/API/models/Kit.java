@@ -16,8 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 public class Kit extends Producto {
 
-    // Sin @Id propio - hereda productoID de Producto (InheritanceType.JOINED)
-
     @ManyToMany
     @JoinTable(
         name = "kit_producto",

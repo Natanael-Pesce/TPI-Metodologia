@@ -6,11 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
-/**
- * CORRECCIÓN:
- * private Cupon cupon → private Integer cuponID.
- * No se pasa la entidad completa, solo el ID del cupón a asociar (opcional).
- */
 @Data
 public class ProductoRegistroDto {
 
@@ -31,6 +26,5 @@ public class ProductoRegistroDto {
     @NotNull
     private boolean productoActivo;
 
-    // CORREGIDO: solo el ID del cupón, no la entidad completa
     private Integer cuponID;
 }

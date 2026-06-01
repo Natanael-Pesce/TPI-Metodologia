@@ -23,17 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * ARCHIVO MODIFICADO: src/main/java/Tpi_Metodologia/API/services/impl/PedidoServiceImpl.java
- *
- * CAMBIOS RESPECTO AL ORIGINAL:
- *   1. Inyección de IEmailService (HU-01, HU-02, HU-03)
- *   2. crear() → envía email de confirmación de compra (HU-01)
- *   3. confirmarPedido() → BUG FIX: estado cambia a CONFIRMADO (no ENTREGADO)
- *   4. confirmarPedido() → envía email con tracking (HU-02)
- *   5. actualizarEstado() → envía email de cambio de estado (HU-03)
- *   6. PedidoRepository.findByEstado() ahora recibe EstadoPedido (enum) — ver repo
- */
 @Service
 @RequiredArgsConstructor
 public class PedidoServiceImpl implements IPedidoService {
@@ -43,7 +32,7 @@ public class PedidoServiceImpl implements IPedidoService {
     private final ProductoRepository productoRepository;
     private final CuponRepository cuponRepository;
     private final DomicilioRepository domicilioRepository;
-    private final IEmailService emailService; // ← NUEVO: inyección para notificaciones
+    private final IEmailService emailService;
 
     @Override
     @Transactional
@@ -155,8 +144,8 @@ public class PedidoServiceImpl implements IPedidoService {
     @Override
     public List<PedidoResponseDto> listarTodos() {
         return pedidoRepository.findAll().stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -165,13 +154,12 @@ public class PedidoServiceImpl implements IPedidoService {
             throw new ResourceNotFoundException("Usuario", usuarioID);
         }
         return pedidoRepository.findByUsuarioUsuarioID(usuarioID).stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<PedidoResponseDto> listarPorEstado(String estado) {
-        // FIX: convertir String a enum para que coincida con la entidad
         EstadoPedido estadoEnum = EstadoPedido.valueOf(estado.toUpperCase());
         return pedidoRepository.findByEstado(estadoEnum).stream()
                 .map(this::toResponseDto)
@@ -187,7 +175,6 @@ public class PedidoServiceImpl implements IPedidoService {
             pedido.setEstado(nuevoEstado);
             pedidoRepository.save(pedido);
 
-            // HU-03: Notificar al cliente el cambio de estado
             emailService.enviarNotificacionEstadoPedido(
                 pedido.getUsuario().getCorreo(),
                 pedido.getUsuario().getNombre() + " " + pedido.getUsuario().getApellido(),
@@ -270,7 +257,6 @@ public class PedidoServiceImpl implements IPedidoService {
             envio.setFechaEntrega(LocalDate.now().plusDays(5));
         }
 
-        // BUG FIX: era ENTREGADO — debe ser CONFIRMADO
         pedido.setEstado(EstadoPedido.CONFIRMADO);
 
         PedidoResponseDto response = toResponseDto(pedidoRepository.save(pedido));
@@ -296,13 +282,11 @@ public class PedidoServiceImpl implements IPedidoService {
         return response;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Auxiliares de mapeo
-    // ─────────────────────────────────────────────────────────────
+    //Revisar
 
     private Pedido obtenerPedidoOException(int id) {
         return pedidoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Pedido", id));
     }
 
     private PedidoResponseDto toResponseDto(Pedido p) {
@@ -319,8 +303,8 @@ public class PedidoServiceImpl implements IPedidoService {
 
         if (p.getDetalles() != null) {
             dto.setDetalles(p.getDetalles().stream()
-                    .map(this::toDetalleResponseDto)
-                    .collect(Collectors.toList()));
+                .map(this::toDetalleResponseDto)
+                .collect(Collectors.toList()));
         }
         if (p.getPago() != null) {
             dto.setPago(toPagoResponseDto(p.getPago()));
@@ -359,7 +343,7 @@ public class PedidoServiceImpl implements IPedidoService {
         dto.setEnvioID(e.getEnvioID());
         dto.setTracking(e.getTracking());
         dto.setEstadoEnvio(e.getEstadoEnvio());
-        dto.setFechaEntrega(e.getFechaEntrega()); // FIX: antes usaba nombre de campo inexistente
+        dto.setFechaEntrega(e.getFechaEntrega());
         if (e.getDomicilio() != null) {
             DomicilioResponseDto dom = new DomicilioResponseDto();
             dom.setDomicilioID(e.getDomicilio().getDomicilioID());

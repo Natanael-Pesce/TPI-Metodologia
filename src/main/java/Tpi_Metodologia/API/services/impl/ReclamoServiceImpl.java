@@ -34,10 +34,10 @@ public class ReclamoServiceImpl implements IReclamoService {
     @Transactional
     public ReclamoResponseDto crear(ReclamoRegistroDto dto) {
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioID())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", dto.getUsuarioID()));
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario", dto.getUsuarioID()));
 
         Pedido pedido = pedidoRepository.findById(dto.getPedidoID())
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido", dto.getPedidoID()));
+            .orElseThrow(() -> new ResourceNotFoundException("Pedido", dto.getPedidoID()));
 
         if (pedido.getUsuario().getUsuarioID() != dto.getUsuarioID()) {
             throw new BadRequestException("El pedido no pertenece al cliente indicado");
@@ -66,8 +66,8 @@ public class ReclamoServiceImpl implements IReclamoService {
     @Override
     public List<ReclamoResponseDto> listarTodos() {
         return reclamoRepository.findAll().stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -76,16 +76,16 @@ public class ReclamoServiceImpl implements IReclamoService {
             throw new ResourceNotFoundException("Usuario", usuarioID);
         }
         return reclamoRepository.findByUsuarioUsuarioID(usuarioID).stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<ReclamoResponseDto> listarPorEstado(String estado) {
         EstadoReclamo estadoEnum = EstadoReclamo.valueOf(estado.toUpperCase());
         return reclamoRepository.findByEstado(estadoEnum).stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -126,13 +126,11 @@ public class ReclamoServiceImpl implements IReclamoService {
         return toResponseDto(reclamoRepository.save(reclamo));
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Auxiliares
-    // ─────────────────────────────────────────────────────────────
+    //Revisar
 
     private Reclamo obtenerReclamoOException(int id) {
         return reclamoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Reclamo", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Reclamo", id));
     }
 
     private ReclamoResponseDto toResponseDto(Reclamo r) {

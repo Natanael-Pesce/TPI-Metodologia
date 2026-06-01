@@ -13,9 +13,7 @@ public interface IPagoService {
 
     List<PagoResponseDto> listarPorEstado(EstadoPago estado);
 
-    /** Aprueba el pago y avanza el pedido a CONFIRMADO */
     PagoResponseDto aprobarPago(int pagoID);
 
-    /** Rechaza el pago, devuelve stock y cancela el pedido */
     PagoResponseDto rechazarPago(int pagoID);
 }

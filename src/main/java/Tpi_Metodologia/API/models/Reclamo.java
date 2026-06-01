@@ -23,10 +23,10 @@ public class Reclamo {
     @Column(nullable = false)
     private String motivo;
 
-    private String tipo; // PRODUCTO_DEFECTUOSO, ENTREGA_TARDÍA, ERROR_COBRO, etc.
+    private String tipo;
 
     @Column(nullable = false)
-    private EstadoReclamo estado; // ABIERTO, EN_PROCESO, RESUELTO, CERRADO
+    private EstadoReclamo estado;
 
     @ManyToOne
     @JoinColumn(name = "pedidoID", nullable = false)

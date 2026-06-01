@@ -22,13 +22,10 @@ public class UsuarioRegistroDto {
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
     private String contrasena;
 
-    // Domicilio se puede crear inline o agregar después via /clientes/{id}/domicilios
     private DomicilioRegistroDto domicilio;
 
-    // Cupón opcional al registrarse
     private String codigoCupon;
 
-    //@NotBlank(message = "Debe de ingresar un cuil")
-    //opcinal
+    //opcional
     private String cuit;
 }

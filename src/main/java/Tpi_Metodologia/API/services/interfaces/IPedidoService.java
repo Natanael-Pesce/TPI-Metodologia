@@ -22,7 +22,5 @@ public interface IPedidoService {
 
     void cancelar(int id);
 
-    /** Confirma un pedido: valida stock, aprueba pago, genera tracking, cambia estado */
     PedidoResponseDto confirmarPedido(int pedidoID);
-
 }

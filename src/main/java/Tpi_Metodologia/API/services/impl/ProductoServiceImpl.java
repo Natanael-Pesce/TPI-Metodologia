@@ -37,7 +37,7 @@ public class ProductoServiceImpl implements IProductoService {
 
         if (dto.getCuponID() != null) {
             Cupon cupon = cuponRepository.findById(dto.getCuponID())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cupon", dto.getCuponID()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cupon", dto.getCuponID()));
             producto.setCupon(cupon);
         }
 
@@ -52,35 +52,34 @@ public class ProductoServiceImpl implements IProductoService {
     @Override
     public List<ProductoResponseDto> listarTodos() {
         return productoRepository.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductoResponseDto> listarActivos() {
         return productoRepository.findByProductoActivoTrue()
-                .stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductoResponseDto> buscarPorNombre(String nombre) {
         return productoRepository.findByNombreProductoContainingIgnoreCase(nombre)
-                .stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductoResponseDto> listarConStockBajo() {
-        // Devuelve productos donde stock <= stockMin
         return productoRepository.findAll()
-                .stream()
-                .filter(p -> p.isProductoActivo() && p.getStock() <= p.getStockMin())
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .filter(p -> p.isProductoActivo() && p.getStock() <= p.getStockMin())
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -96,7 +95,7 @@ public class ProductoServiceImpl implements IProductoService {
         if (dto.getProductoActivo() != null) producto.setProductoActivo(dto.getProductoActivo());
         if (dto.getCuponID() != null) {
             Cupon cupon = cuponRepository.findById(dto.getCuponID())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cupon", dto.getCuponID()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cupon", dto.getCuponID()));
             producto.setCupon(cupon);
         }
 
@@ -119,11 +118,11 @@ public class ProductoServiceImpl implements IProductoService {
         return toResponseDto(productoRepository.save(producto));
     }
 
-    // --- Auxiliares ---
+    //Revisar
 
     private Producto obtenerProductoOException(int id) {
         return productoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Producto", id));
     }
 
     public ProductoResponseDto toResponseDto(Producto p) {

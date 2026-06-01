@@ -17,7 +17,6 @@ public class DetallePedidoMapper {
         detalle.setProducto(producto);
         detalle.setCantidad(dto.getCantidad());
         detalle.setSubTotal(producto.getPrecioProducto() * dto.getCantidad());
-        // detalle.setPedido(...) → se asigna en PedidoMapper
  
         return detalle;
     }

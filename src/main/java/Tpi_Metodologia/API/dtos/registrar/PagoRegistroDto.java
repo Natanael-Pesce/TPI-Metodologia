@@ -4,10 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
-/**
- * NUEVO: DTO para registrar un pago.
- * No existía en el proyecto original.
- */
 @Data
 public class PagoRegistroDto {
 

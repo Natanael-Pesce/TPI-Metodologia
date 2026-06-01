@@ -4,9 +4,6 @@ import lombok.Data;
 
 import java.time.LocalDate;
 
-/**
- * NUEVO: Response DTO para Cupon.
- */
 @Data
 public class CuponResponseDto {
 

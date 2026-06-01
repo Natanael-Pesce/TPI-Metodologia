@@ -18,7 +18,7 @@ public class ProductoMapper {
  
         if (dto.getCuponID() != null) {
             Cupon cupon = cuponRepository.findById(dto.getCuponID())
-                    .orElseThrow(() -> new RuntimeException("Cupón no encontrado con ID: " + dto.getCuponID()));
+                .orElseThrow(() -> new RuntimeException("Cupón no encontrado con ID: " + dto.getCuponID()));
             producto.setCupon(cupon);
         }
  

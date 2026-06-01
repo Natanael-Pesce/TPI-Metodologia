@@ -104,8 +104,10 @@ public class CuponServiceImpl implements ICuponService {
 
     private Cupon obtenerCuponOException(int id) {
         return cuponRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cupon", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Cupon", id));
     }
+
+    //Revisar
 
     public CuponResponseDto toResponseDto(Cupon c) {
         CuponResponseDto dto = new CuponResponseDto();

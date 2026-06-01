@@ -14,12 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * NUEVO: Implementación del servicio de Domicilio con CRUD completo.
- * Antes la gestión de domicilios solo existía dentro de UsuarioServiceImpl.
- *
- * ARCHIVO: src/main/java/Tpi_Metodologia/API/services/impl/DomicilioServiceImpl.java
- */
 @Service
 @RequiredArgsConstructor
 public class DomicilioServiceImpl implements IDomicilioService {
@@ -45,9 +39,6 @@ public class DomicilioServiceImpl implements IDomicilioService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Actualización parcial: solo actualiza los campos no nulos del DTO.
-     */
     @Override
     @Transactional
     public DomicilioResponseDto update(int id, DomicilioUpdateDto dto) {
@@ -89,9 +80,7 @@ public class DomicilioServiceImpl implements IDomicilioService {
         domicilioRepository.deleteById(id);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Auxiliares
-    // ─────────────────────────────────────────────────────────────
+    //Revisar
 
     private Domicilio obtenerOException(int id) {
         return domicilioRepository.findById(id)

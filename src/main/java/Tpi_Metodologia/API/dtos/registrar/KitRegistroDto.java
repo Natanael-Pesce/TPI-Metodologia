@@ -5,11 +5,6 @@ import lombok.Data;
 
 import java.util.List;
 
-/**
- * NUEVO: DTO para crear un Kit.
- * Hereda los datos de Producto + lista de IDs de productos que lo componen.
- * Responde a la nota en notas.txt: en el frontend, si esKit=true se usa este endpoint.
- */
 @Data
 public class KitRegistroDto {
 

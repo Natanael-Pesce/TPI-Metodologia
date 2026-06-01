@@ -46,14 +46,12 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuario.setCuit(dto.getCuit());
         usuario.setDomicilios(new ArrayList<>());
 
-        // Domicilio inline opcional
         if (dto.getDomicilio() != null) {
             Domicilio domicilio = toDomicilioEntity(dto.getDomicilio());
             domicilio = domicilioRepository.save(domicilio);
             usuario.getDomicilios().add(domicilio);
         }
 
-        // Cupón opcional
         if (dto.getCodigoCupon() != null && !dto.getCodigoCupon().isBlank()) {
             Cupon cupon = cuponRepository.findByCodigo(dto.getCodigoCupon())
                     .orElseThrow(() -> new BadRequestException("Cupón con código '" + dto.getCodigoCupon() + "' no encontrado"));
@@ -72,9 +70,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     public List<UsuarioResponseDto> listarTodos() {
         return usuarioRepository.findAll()
-                .stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -123,9 +121,9 @@ public class UsuarioServiceImpl implements IUsuarioService {
     public List<DomicilioResponseDto> listarDomicilios(int usuarioID) {
         Usuario usuario = obtenerOException(usuarioID);
         return usuario.getDomicilios()
-                .stream()
-                .map(this::toDomicilioResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(this::toDomicilioResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -144,7 +142,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     public UsuarioResponseDto aplicarCupon(int usuarioID, String codigoCupon) {
         Usuario usuario = obtenerOException(usuarioID);
         Cupon cupon = cuponRepository.findByCodigo(codigoCupon)
-                .orElseThrow(() -> new BadRequestException("Cupón '" + codigoCupon + "' no encontrado"));
+            .orElseThrow(() -> new BadRequestException("Cupón '" + codigoCupon + "' no encontrado"));
         validarCupon(cupon);
         usuario.setCupon(cupon);
         return toResponseDto(usuarioRepository.save(usuario));
@@ -153,7 +151,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     public UsuarioResponseDto login(String correo, String contrasena) {
         Usuario usuario = usuarioRepository.findByCorreo(correo)
-                .orElseThrow(() -> new BadRequestException("Correo o contraseña incorrectos"));
+            .orElseThrow(() -> new BadRequestException("Correo o contraseña incorrectos"));
         // En producción: BCrypt.matches(contrasena, superUsuario.getContrasena())
         if (!usuario.getContrasena().equals(contrasena)) {
             throw new BadRequestException("Correo o contraseña incorrectos");
@@ -161,7 +159,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         return toResponseDto(usuario);
     }
 
-    // --- Métodos auxiliares privados ---
+    //Revisar
 
     private Usuario obtenerOException(int id) {
         return usuarioRepository.findById(id)

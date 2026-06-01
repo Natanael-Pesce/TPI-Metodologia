@@ -24,6 +24,5 @@ public interface IProductoService {
 
     void eliminar(int id);
 
-    // Activar/desactivar producto (baja lógica)
     ProductoResponseDto cambiarEstado(int id, boolean activo);
 }

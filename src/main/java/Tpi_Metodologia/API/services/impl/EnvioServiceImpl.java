@@ -27,7 +27,7 @@ public class EnvioServiceImpl implements IEnvioService {
 
     private final EnvioRepository envioRepository;
     private final DomicilioRepository domicilioRepository;
-    private final IEmailService emailService; // ← NUEVO para HU-03
+    private final IEmailService emailService;
 
     @Override
     public EnvioResponseDto obtenerPorId(int id) {
@@ -37,21 +37,20 @@ public class EnvioServiceImpl implements IEnvioService {
     @Override
     public EnvioResponseDto obtenerPorTracking(String tracking) {
         Envio envio = envioRepository.findByTracking(tracking)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    "Envio con tracking " + tracking, 0));
+            .orElseThrow(() -> new ResourceNotFoundException("Envio con tracking " + tracking, 0));
         return toDto(envio);
     }
 
     @Override
     public List<EnvioResponseDto> listarTodos() {
         return envioRepository.findAll().stream()
-                .map(this::toDto).collect(Collectors.toList());
+            .map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
     public List<EnvioResponseDto> listarPorEstado(EstadoEnvio estado) {
         return envioRepository.findByEstadoEnvio(estado).stream()
-                .map(this::toDto).collect(Collectors.toList());
+            .map(this::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -75,7 +74,6 @@ public class EnvioServiceImpl implements IEnvioService {
 
         Envio guardado = envioRepository.save(envio);
 
-        // HU-03: Notificar al cliente el cambio de estado del envío
         notificarCambioEstadoEnvio(guardado, nuevoEstado);
 
         return toDto(guardado);
@@ -138,6 +136,7 @@ public class EnvioServiceImpl implements IEnvioService {
         return toDto(guardado);
     }
 
+    //Revisar
 
     private void validarTransicion(EstadoEnvio actual, EstadoEnvio nuevo) {
         if (actual == EstadoEnvio.ENTREGADO || actual == EstadoEnvio.DEVUELTO) {

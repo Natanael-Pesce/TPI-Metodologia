@@ -22,25 +22,25 @@ public class UsuarioController {
 
     private final IUsuarioService UsuarioService;
 
-    // POST /api/superusuarios → registrar
+    // POST /api/usuarios → registrar
     @PostMapping
     public ResponseEntity<UsuarioResponseDto> registrar(@Valid @RequestBody UsuarioRegistroDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioService.registrar(dto));
     }
 
-    // GET /api/superusuarios
+    // GET /api/usuarios
     @GetMapping
     public ResponseEntity<List<UsuarioResponseDto>> listarTodos() {
         return ResponseEntity.ok(UsuarioService.listarTodos());
     }
 
-    // GET /api/superusuarios/{id}
+    // GET /api/usuarios/{id}
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponseDto> obtenerPorId(@PathVariable int id) {
         return ResponseEntity.ok(UsuarioService.obtenerporId(id));
     }
 
-    // PATCH /api/superusuarios/{id}
+    // PATCH /api/usuarios/{id}
     @PatchMapping("/{id}")
     public ResponseEntity<UsuarioResponseDto> actualizar(
             @PathVariable int id,
@@ -48,7 +48,7 @@ public class UsuarioController {
         return ResponseEntity.ok(UsuarioService.actualizar(id, dto));
     }
 
-    // DELETE /api/superusuarios/{id}
+    // DELETE /api/usuarios/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
         UsuarioService.eliminar(id);
@@ -63,7 +63,7 @@ public class UsuarioController {
         return ResponseEntity.ok(UsuarioService.listarDomicilios(id));
     }
 
-    // POST /api/superusuarios/{id}/domicilios
+    // POST /api/usuarios/{id}/domicilios
     @PostMapping("/{id}/domicilios")
     public ResponseEntity<DomicilioResponseDto> agregarDomicilio(
             @PathVariable int id,
@@ -71,16 +71,16 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioService.agregarDomicilio(id, dto));
     }
 
-    // DELETE /api/superusuarios/{usuarioId}/domicilios/{domicilioId}
+    // DELETE /api/usuarios/{usuarioId}/domicilios/{domicilioId}
     @DeleteMapping("/{usuarioId}/domicilios/{domicilioId}")
     public ResponseEntity<Void> eliminarDomicilio(
-            @PathVariable int usuarioId,
+            @PathVariable int usuarioID,
             @PathVariable int domicilioId) {
-        UsuarioService.eliminarDomicilio(usuarioId, domicilioId);
+        UsuarioService.eliminarDomicilio(usuarioID, domicilioId);
         return ResponseEntity.noContent().build();
     }
 
-    // POST /api/superusuarios/{id}/cupones → aplicar cupón
+    // POST /api/usuarios/{id}/cupones → aplicar cupón
     @PostMapping("/{id}/cupones")
     public ResponseEntity<UsuarioResponseDto> aplicarCupon(
             @PathVariable int id,
@@ -88,7 +88,7 @@ public class UsuarioController {
         return ResponseEntity.ok(UsuarioService.aplicarCupon(id, codigo));
     }
 
-    // POST /api/superusuarios/login
+    // POST /api/usuarios/login
     @PostMapping("/login")
     public ResponseEntity<UsuarioResponseDto> login(@Valid @RequestBody UsuarioLoginDto dto) {
         return ResponseEntity.ok(UsuarioService.login(dto.getCorreo(), dto.getContrasena()));

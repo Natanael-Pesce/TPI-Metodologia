@@ -26,7 +26,7 @@ public class PedidoMapper {
         Pedido pedido = new Pedido();
 
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioID())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.getUsuarioID()));
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.getUsuarioID()));
         pedido.setUsuario(usuario);
  
         pedido.setEstado(EstadoPedido.PENDIENTE);
@@ -37,7 +37,7 @@ public class PedidoMapper {
  
         for (var detalleDto : dto.getDetalles()) {
             Detalle_Pedido detalle = DetallePedidoMapper.toEntity(detalleDto, productoRepository);
-            detalle.setPedido(pedido); // asignar referencia al pedido padre
+            detalle.setPedido(pedido);
             detalles.add(detalle);
             total += detalle.getSubTotal();
         }
@@ -45,13 +45,11 @@ public class PedidoMapper {
         pedido.setDetalles(detalles);
         pedido.setTotal(total);
  
-        // Pago opcional
         if (dto.getPago() != null) {
             Pago pago = PagoMapper.toEntity(dto.getPago());
             pedido.setPago(pago);
         }
  
-        // Envio opcional
         if (dto.getDomicilioEnvioID() != null) {
             Envio envio = EnvioMapper.toEntity(dto.getDomicilioEnvioID(), domicilioRepository);
             pedido.setEnvio(envio);
@@ -70,7 +68,6 @@ public class PedidoMapper {
         dto.setEstado(pedido.getEstado());
         dto.setFechaPedido(pedido.getFechaPedido());
  
-        // Mapear detalles
         if (pedido.getDetalles() != null) {
             List<Detalle_PedidoResponseDto> detallesDto = pedido.getDetalles().stream()
                     .map(DetallePedidoMapper::toDto)
@@ -78,17 +75,14 @@ public class PedidoMapper {
             dto.setDetalles(detallesDto);
         }
  
-        // Mapear pago (puede ser null)
         if (pedido.getPago() != null) {
             dto.setPago(PagoMapper.toDto(pedido.getPago()));
         }
  
-        // Mapear envio (puede ser null)
         if (pedido.getEnvio() != null) {
             dto.setEnvio(EnvioMapper.toDto(pedido.getEnvio()));
         }
  
         return dto;
         }
-    
 }

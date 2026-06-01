@@ -13,7 +13,7 @@ public class UsuarioUpdateDto {
     @Email(message = "Formato de correo inválido")
     private String correo;
 
-    private String contrasena; // si viene, se actualiza; si no, se ignora
+    private String contrasena;
 
     private Rol rol;
     

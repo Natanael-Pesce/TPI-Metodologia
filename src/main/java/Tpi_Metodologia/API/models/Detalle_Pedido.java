@@ -18,7 +18,7 @@ public class Detalle_Pedido {
 
     @ManyToOne
     @JoinColumn(name = "productoID", nullable = false)
-    private Producto producto; // CORREGIDO: era @OneToMany, debe ser @ManyToOne
+    private Producto producto;
 
     @ManyToOne
     @JoinColumn(name = "pedidoID")
@@ -28,5 +28,5 @@ public class Detalle_Pedido {
     @Column(nullable = false)
     private int cantidad;
 
-    private double subTotal; // calculado en el Service: producto.precio * cantidad
+    private double subTotal;
 }

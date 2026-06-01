@@ -17,13 +17,10 @@ public class PedidoRegistroDto {
     @Valid
     private List<Pedido_DetalleRegistroDto> detalles;
 
-    // Datos de pago opcionales al crear (puede pagarse después)
     @Valid
     private PagoRegistroDto pago;
 
-    // Domicilio de envío (ID de domicilio existente del cliente)
     private Integer domicilioEnvioID;
 
-    // Código de cupón opcional
     private String codigoCupon;
 }

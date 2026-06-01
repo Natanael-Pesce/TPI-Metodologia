@@ -11,11 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Kit extiende Producto, por lo que se podría integrar en /productos,
- * pero lo separamos para respetar la nota del proyecto (flag boolean en frontend).
- * Endpoint: /api/kits
- */
 @RestController
 @RequestMapping("/api/kits")
 @RequiredArgsConstructor
@@ -41,7 +36,7 @@ public class KitController {
         return ResponseEntity.ok(kitService.obtenerPorId(id));
     }
 
-    // PUT /api/kits/{id}  (PUT porque reemplazamos lista de productos)
+    // PUT /api/kits/{id}
     @PutMapping("/{id}")
     public ResponseEntity<ProductoResponseDto> actualizar(
             @PathVariable int id,

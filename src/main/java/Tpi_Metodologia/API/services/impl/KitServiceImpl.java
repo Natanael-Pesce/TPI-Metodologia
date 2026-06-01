@@ -24,7 +24,7 @@ public class KitServiceImpl implements IKitService {
     private final KitRepository kitRepository;
     private final ProductoRepository productoRepository;
     private final CuponRepository cuponRepository;
-    private final ProductoServiceImpl productoService; // reutilizamos el mapper
+    private final ProductoServiceImpl productoService;
 
     @Override
     @Transactional
@@ -39,14 +39,14 @@ public class KitServiceImpl implements IKitService {
 
         if (dto.getCuponID() != null) {
             Cupon cupon = cuponRepository.findById(dto.getCuponID())
-                    .orElseThrow(() -> new ResourceNotFoundException("Cupon", dto.getCuponID()));
+                .orElseThrow(() -> new ResourceNotFoundException("Cupon", dto.getCuponID()));
             kit.setCupon(cupon);
         }
 
         // Cargar los productos que componen el kit
         List<Producto> productos = dto.getProductosIDs().stream()
                 .map(pid -> productoRepository.findById(pid)
-                        .orElseThrow(() -> new ResourceNotFoundException("Producto", pid)))
+                    .orElseThrow(() -> new ResourceNotFoundException("Producto", pid)))
                 .collect(Collectors.toList());
         kit.setProductos(productos);
 
@@ -56,23 +56,23 @@ public class KitServiceImpl implements IKitService {
     @Override
     public ProductoResponseDto obtenerPorId(int id) {
         Kit kit = kitRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Kit", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Kit", id));
         return productoService.toResponseDto(kit);
     }
 
     @Override
     public List<ProductoResponseDto> listarTodos() {
         return kitRepository.findAll()
-                .stream()
-                .map(productoService::toResponseDto)
-                .collect(Collectors.toList());
+            .stream()
+            .map(productoService::toResponseDto)
+            .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public ProductoResponseDto actualizar(int id, KitRegistroDto dto) {
         Kit kit = kitRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Kit", id));
+            .orElseThrow(() -> new ResourceNotFoundException("Kit", id));
 
         if (dto.getNombreProducto() != null) kit.setNombreProducto(dto.getNombreProducto());
         if (dto.getPrecioProducto() > 0) kit.setPrecioProducto(dto.getPrecioProducto());
@@ -83,9 +83,9 @@ public class KitServiceImpl implements IKitService {
 
         if (dto.getProductosIDs() != null && !dto.getProductosIDs().isEmpty()) {
             List<Producto> productos = dto.getProductosIDs().stream()
-                    .map(pid -> productoRepository.findById(pid)
-                            .orElseThrow(() -> new ResourceNotFoundException("Producto", pid)))
-                    .collect(Collectors.toList());
+                .map(pid -> productoRepository.findById(pid)
+                        .orElseThrow(() -> new ResourceNotFoundException("Producto", pid)))
+                .collect(Collectors.toList());
             kit.setProductos(productos);
         }
 

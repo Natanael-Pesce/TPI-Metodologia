@@ -3,10 +3,6 @@ package Tpi_Metodologia.API.dtos.registrar;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-/**
- * NUEVO: DTO para crear un domicilio.
- * Separado para poder reutilizarse en ClienteRegistroDto y en el endpoint de domicilios.
- */
 @Data
 public class DomicilioRegistroDto {
 

@@ -18,7 +18,6 @@ public class Domicilio {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int domicilioID;
 
-    // Relación inversa - el dueño es Cliente
     @ManyToMany(mappedBy = "domicilios")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Usuario> usuarios;

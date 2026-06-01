@@ -11,7 +11,7 @@ public class CuponMapper {
         cupon.setDescuento(dto.getDescuento());
         cupon.setFechaInicio(dto.getFechaInicio());
         cupon.setFechaFin(dto.getFechaFin());
-        cupon.setEstado(true); // activo al crear
+        cupon.setEstado(true);
         return cupon;
     }
  

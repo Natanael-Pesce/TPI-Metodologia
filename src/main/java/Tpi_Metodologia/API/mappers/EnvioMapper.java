@@ -13,7 +13,7 @@ public class EnvioMapper {
         envio.setEstadoEnvio(EstadoEnvio.PREPARANDO);
  
         Domicilio domicilio = domicilioRepository.findById(domicilioID)
-                .orElseThrow(() -> new RuntimeException("Domicilio no encontrado con ID: " + domicilioID));
+            .orElseThrow(() -> new RuntimeException("Domicilio no encontrado con ID: " + domicilioID));
         envio.setDomicilio(domicilio);
  
         return envio;

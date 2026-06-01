@@ -6,12 +6,6 @@ import Tpi_Metodologia.API.dtos.update.DomicilioUpdateDto;
 
 import java.util.List;
 
-/**
- * NUEVO: Interfaz de servicio para Domicilio con CRUD completo.
- * Antes solo existía como sub-recurso de UsuarioService.
- *
- * ARCHIVO: src/main/java/Tpi_Metodologia/API/services/interfaces/IDomicilioService.java
- */
 public interface IDomicilioService {
 
     DomicilioResponseDto crear(DomicilioRegistroDto dto);

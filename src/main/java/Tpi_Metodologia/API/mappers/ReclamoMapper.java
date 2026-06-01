@@ -19,15 +19,15 @@ public class ReclamoMapper {
  
         reclamo.setMotivo(dto.getMotivo());
         reclamo.setTipo(dto.getTipo());
-        reclamo.setEstado(EstadoReclamo.ABIERTO); // estado inicial por defecto
+        reclamo.setEstado(EstadoReclamo.ABIERTO);
         reclamo.setFechaReclamo(LocalDate.now());
  
         Pedido pedido = pedidoRepository.findById(dto.getPedidoID())
-                .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + dto.getPedidoID()));
+            .orElseThrow(() -> new RuntimeException("Pedido no encontrado con ID: " + dto.getPedidoID()));
         reclamo.setPedido(pedido);
  
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioID())
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.getUsuarioID()));
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + dto.getUsuarioID()));
         reclamo.setUsuario(usuario);
  
         return reclamo;

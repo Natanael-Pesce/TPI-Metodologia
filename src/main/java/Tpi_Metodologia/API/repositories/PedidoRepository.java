@@ -11,12 +11,9 @@ import java.util.List;
 @Repository
 public interface PedidoRepository extends JpaRepository<Pedido, Integer> {
 
-    // Todos los pedidos de un cliente
     List<Pedido> findByUsuarioUsuarioID(int usuarioID);
 
-    // Pedidos por estado (PENDIENTE, CONFIRMADO, etc.)
     List<Pedido> findByEstado(EstadoPedido estado);
 
-    // Pedidos de un cliente por estado
     List<Pedido> findByUsuarioUsuarioIDAndEstado(int usuarioID, EstadoPedido estado);
 }

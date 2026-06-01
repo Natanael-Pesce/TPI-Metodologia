@@ -17,7 +17,6 @@ public class KitMapper {
  
         Kit kit = new Kit();
  
-        // Campos heredados de Producto
         kit.setNombreProducto(dto.getNombreProducto());
         kit.setPrecioProducto(dto.getPrecioProducto());
         kit.setImagen(dto.getImagen());
@@ -25,14 +24,12 @@ public class KitMapper {
         kit.setStockMin(dto.getStockMin());
         kit.setProductoActivo(dto.isProductoActivo());
  
-        // Cupón opcional
         if (dto.getCuponID() != null) {
             Cupon cupon = cuponRepository.findById(dto.getCuponID())
                     .orElseThrow(() -> new RuntimeException("Cupón no encontrado con ID: " + dto.getCuponID()));
             kit.setCupon(cupon);
         }
- 
-        // Resolver productos componentes por ID
+
         List<Producto> productos = dto.getProductosIDs().stream()
                 .map(id -> productoRepository.findById(id)
                         .orElseThrow(() -> new RuntimeException("Producto componente no encontrado con ID: " + id)))
