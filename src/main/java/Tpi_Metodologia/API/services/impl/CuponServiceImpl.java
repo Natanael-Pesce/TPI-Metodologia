@@ -8,6 +8,8 @@ import Tpi_Metodologia.API.models.Cupon;
 import Tpi_Metodologia.API.repositories.CuponRepository;
 import Tpi_Metodologia.API.services.interfaces.ICuponService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class CuponServiceImpl implements ICuponService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')")
     public CuponResponseDto crear(CuponRegistroDto dto) {
         if (cuponRepository.existsByCodigo(dto.getCodigo())) {
             throw new BadRequestException("Ya existe un cupón con el código '" + dto.getCodigo() + "'");
@@ -55,6 +58,7 @@ public class CuponServiceImpl implements ICuponService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN', 'ROLE_CLIENTE')")
     public List<CuponResponseDto> listarTodos() {
         return cuponRepository.findAll().stream()
                 .map(this::toResponseDto)
@@ -62,6 +66,7 @@ public class CuponServiceImpl implements ICuponService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN', 'ROLE_CLIENTE')")
     public List<CuponResponseDto> listarActivos() {
         LocalDate hoy = LocalDate.now();
         return cuponRepository.findAll().stream()
@@ -74,6 +79,7 @@ public class CuponServiceImpl implements ICuponService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')")
     public CuponResponseDto actualizar(int id, CuponRegistroDto dto) {
         Cupon cupon = obtenerCuponOException(id);
 
@@ -95,6 +101,7 @@ public class CuponServiceImpl implements ICuponService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')")
     public void eliminar(int id) {
         if (!cuponRepository.existsById(id)) {
             throw new ResourceNotFoundException("Cupon", id);

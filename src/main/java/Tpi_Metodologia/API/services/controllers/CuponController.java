@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,12 +21,14 @@ public class CuponController {
 
     // POST /api/cupones
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')")
     public ResponseEntity<CuponResponseDto> crear(@Valid @RequestBody CuponRegistroDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(cuponService.crear(dto));
     }
 
     // GET /api/cupones
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CuponResponseDto>> listarTodos(
             @RequestParam(required = false, defaultValue = "false") boolean soloActivos) {
         if (soloActivos) {
@@ -36,18 +39,21 @@ public class CuponController {
 
     // GET /api/cupones/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CuponResponseDto> obtenerPorId(@PathVariable int id) {
         return ResponseEntity.ok(cuponService.obtenerPorId(id));
     }
 
     // GET /api/cupones/codigo/{codigo}
     @GetMapping("/codigo/{codigo}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CuponResponseDto> obtenerPorCodigo(@PathVariable String codigo) {
         return ResponseEntity.ok(cuponService.obtenerPorCodigo(codigo));
     }
 
     // PUT /api/cupones/{id}
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')")
     public ResponseEntity<CuponResponseDto> actualizar(
             @PathVariable int id,
             @Valid @RequestBody CuponRegistroDto dto) {
@@ -56,6 +62,7 @@ public class CuponController {
 
     // DELETE /api/cupones/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
         cuponService.eliminar(id);
         return ResponseEntity.noContent().build();

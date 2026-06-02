@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,11 +21,13 @@ public class ReclamoController {
     private final IReclamoService reclamoService;
 
     @PostMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReclamoResponseDto> crear(@Valid @RequestBody ReclamoRegistroDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(reclamoService.crear(dto));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ResponseEntity<List<ReclamoResponseDto>> listarTodos(
             @RequestParam(required = false) String estado) {
         if (estado != null && !estado.isBlank()) {
@@ -34,16 +37,19 @@ public class ReclamoController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ReclamoResponseDto> obtenerPorId(@PathVariable int id) {
         return ResponseEntity.ok(reclamoService.obtenerPorId(id));
     }
 
     @GetMapping("/cliente/{clienteId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ReclamoResponseDto>> listarPorCliente(@PathVariable int clienteId) {
         return ResponseEntity.ok(reclamoService.listarPorCliente(clienteId));
     }
 
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ResponseEntity<ReclamoResponseDto> cambiarEstado(
             @PathVariable int id,
             @RequestParam String nuevoEstado) {
@@ -51,6 +57,7 @@ public class ReclamoController {
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ResponseEntity<ReclamoResponseDto> update(
             @PathVariable int id,
             @RequestBody ReclamoUpdateDto dto) {

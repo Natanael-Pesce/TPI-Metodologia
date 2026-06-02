@@ -13,10 +13,15 @@ import Tpi_Metodologia.API.repositories.ReclamoRepository;
 import Tpi_Metodologia.API.services.interfaces.IReclamoService;
 import Tpi_Metodologia.API.utility.EstadoPedido;
 import Tpi_Metodologia.API.utility.EstadoReclamo;
+import Tpi_Metodologia.API.utility.Rol;
 import Tpi_Metodologia.API.repositories.UsuarioRepository;
+import Tpi_Metodologia.API.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +37,14 @@ public class ReclamoServiceImpl implements IReclamoService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_CLIENTE', 'ROLE_ADMIN')")
     public ReclamoResponseDto crear(ReclamoRegistroDto dto) {
+        Usuario autenticado = SecurityUtils.getUsuarioAutenticado();
+        
+        if (autenticado.getRol() == Rol.ROLE_CLIENTE && autenticado.getUsuarioID() != dto.getUsuarioID()){
+            throw new AccessDeniedException("No puedes crear reclamos para otros usuarios");
+        }
+
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioID())
             .orElseThrow(() -> new ResourceNotFoundException("Usuario", dto.getUsuarioID()));
 
@@ -59,11 +71,13 @@ public class ReclamoServiceImpl implements IReclamoService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ReclamoResponseDto obtenerPorId(int id) {
         return toResponseDto(obtenerReclamoOException(id));
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public List<ReclamoResponseDto> listarTodos() {
         return reclamoRepository.findAll().stream()
             .map(this::toResponseDto)
@@ -71,6 +85,7 @@ public class ReclamoServiceImpl implements IReclamoService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")    
     public List<ReclamoResponseDto> listarPorCliente(int usuarioID) {
         if (!usuarioRepository.existsById(usuarioID)) {
             throw new ResourceNotFoundException("Usuario", usuarioID);
@@ -90,6 +105,7 @@ public class ReclamoServiceImpl implements IReclamoService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ReclamoResponseDto cambiarEstado(int id, String nuevoEstado) {
         Reclamo reclamo = obtenerReclamoOException(id);
         reclamo.setEstado(EstadoReclamo.valueOf(nuevoEstado.toUpperCase()));
@@ -98,6 +114,7 @@ public class ReclamoServiceImpl implements IReclamoService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ReclamoResponseDto update(int id, ReclamoUpdateDto dto) {
         Reclamo reclamo = obtenerReclamoOException(id);
 

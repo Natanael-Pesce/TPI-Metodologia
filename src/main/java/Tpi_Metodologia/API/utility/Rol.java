@@ -1,7 +1,7 @@
 package Tpi_Metodologia.API.utility;
 
 public enum Rol {
-    Cliente,
-    Vendedor,
-    Administrador
+    ROLE_CLIENTE,
+    ROLE_VENDEDOR,
+    ROLE_ADMINISTRADOR
 }

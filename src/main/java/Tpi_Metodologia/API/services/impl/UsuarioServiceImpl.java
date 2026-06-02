@@ -14,9 +14,14 @@ import Tpi_Metodologia.API.repositories.CuponRepository;
 import Tpi_Metodologia.API.repositories.DomicilioRepository;
 import Tpi_Metodologia.API.repositories.UsuarioRepository;
 import Tpi_Metodologia.API.services.interfaces.IUsuarioService;
+import Tpi_Metodologia.API.utility.Rol;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,6 +35,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final DomicilioRepository domicilioRepository;
     private final CuponRepository cuponRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -42,7 +48,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         usuario.setNombre(dto.getNombre());
         usuario.setApellido(dto.getApellido());
         usuario.setCorreo(dto.getCorreo());
-        usuario.setContrasena(dto.getContrasena()); // En producción: BCrypt
+        usuario.setContrasena(passwordEncoder.encode(dto.getContrasena()));
         usuario.setCuit(dto.getCuit());
         usuario.setDomicilios(new ArrayList<>());
 
@@ -63,11 +69,13 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.usuarioID")
     public UsuarioResponseDto obtenerporId(int id) {
         return toResponseDto(obtenerOException(id));
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UsuarioResponseDto> listarTodos() {
         return usuarioRepository.findAll()
             .stream()
@@ -77,6 +85,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
+        @PreAuthorize("hasRole('ADMIN') or #id == authentication.principal.usuarioID")
     public UsuarioResponseDto actualizar(int id, UsuarioUpdateDto dto) {
         Usuario usuario = obtenerOException(id);
 
@@ -91,14 +100,20 @@ public class UsuarioServiceImpl implements IUsuarioService {
             usuario.setCorreo(dto.getCorreo());
         }
         if (dto.getContrasena() != null && !dto.getContrasena().isBlank()) {
-            usuario.setContrasena(dto.getContrasena()); // En producción: BCrypt
+            usuario.setContrasena(passwordEncoder.encode(dto.getContrasena()));
         }
-        if (dto.getRol() != null) usuario.setRol(dto.getRol());
+        if (dto.getRol() != null){
+            if (usuario.getRol() != Rol.ROLE_ADMINISTRADOR){
+                throw new AccessDeniedException("Solo un administrador puede cambiar el rol");
+            }
+            usuario.setRol(dto.getRol());
+        }
 
         return toResponseDto(usuarioRepository.save(usuario));
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public void eliminar(int id) {
         if (!usuarioRepository.existsById(id)) {
             throw new ResourceNotFoundException("SuperUsuario", id);
@@ -108,6 +123,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or #usuarioID == authentication.principal.usuarioID")
     public DomicilioResponseDto agregarDomicilio(int usuarioID, DomicilioRegistroDto dto) {
         Usuario usuario = obtenerOException(usuarioID);
         Domicilio domicilio = toDomicilioEntity(dto);
@@ -118,6 +134,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or #usuarioID == authentication.principal.usuarioID")
     public List<DomicilioResponseDto> listarDomicilios(int usuarioID) {
         Usuario usuario = obtenerOException(usuarioID);
         return usuario.getDomicilios()
@@ -128,6 +145,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or #usuarioID == authentication.principal.usuarioID")
     public void eliminarDomicilio(int usuarioID, int domicilioID) {
         Usuario usuario = obtenerOException(usuarioID);
         boolean removed = usuario.getDomicilios().removeIf(d -> d.getDomicilioID() == domicilioID);
@@ -139,6 +157,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or #usuarioID == authentication.principal.usuarioID")
     public UsuarioResponseDto aplicarCupon(int usuarioID, String codigoCupon) {
         Usuario usuario = obtenerOException(usuarioID);
         Cupon cupon = cuponRepository.findByCodigo(codigoCupon)
@@ -149,6 +168,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
+    @Deprecated
     public UsuarioResponseDto login(String correo, String contrasena) {
         Usuario usuario = usuarioRepository.findByCorreo(correo)
             .orElseThrow(() -> new BadRequestException("Correo o contraseña incorrectos"));
@@ -160,7 +180,6 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     //Revisar
-
     private Usuario obtenerOException(int id) {
         return usuarioRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("SuperUsuario", id));

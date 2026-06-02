@@ -8,15 +8,20 @@ import Tpi_Metodologia.API.config.exceptions.BadRequestException;
 import Tpi_Metodologia.API.config.exceptions.ResourceNotFoundException;
 import Tpi_Metodologia.API.models.*;
 import Tpi_Metodologia.API.repositories.*;
+import Tpi_Metodologia.API.security.SecurityUtils;
 import Tpi_Metodologia.API.services.interfaces.IEmailService;
 import Tpi_Metodologia.API.services.interfaces.IPedidoService;
 import Tpi_Metodologia.API.utility.EstadoEnvio;
 import Tpi_Metodologia.API.utility.EstadoPago;
 import Tpi_Metodologia.API.utility.EstadoPedido;
+import Tpi_Metodologia.API.utility.Rol;
 import Tpi_Metodologia.API.utility.TipoPago;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -36,8 +41,16 @@ public class PedidoServiceImpl implements IPedidoService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_CLIENTE', 'ROLE_ADMIN')")
     public PedidoResponseDto crear(PedidoRegistroDto dto) {
-        // 1. Validar cliente
+
+        Usuario autenticado = SecurityUtils.getUsuarioAutenticado();
+
+        if (autenticado.getRol() == Rol.ROLE_CLIENTE
+                && autenticado.getUsuarioID() != dto.getUsuarioID()) {
+            throw new AccessDeniedException("No puedes crear pedidos para otro usuario");
+        }
+
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioID())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", dto.getUsuarioID()));
 
@@ -50,7 +63,6 @@ public class PedidoServiceImpl implements IPedidoService {
             }
         }
 
-        // 2. Construir detalles y validar stock
         List<Detalle_Pedido> detalles = new ArrayList<>();
         double total = 0;
 
@@ -142,6 +154,7 @@ public class PedidoServiceImpl implements IPedidoService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public List<PedidoResponseDto> listarTodos() {
         return pedidoRepository.findAll().stream()
             .map(this::toResponseDto)
@@ -150,6 +163,12 @@ public class PedidoServiceImpl implements IPedidoService {
 
     @Override
     public List<PedidoResponseDto> listarPorCliente(int usuarioID) {
+         Usuario autenticado = SecurityUtils.getUsuarioAutenticado();
+
+        if (autenticado.getRol() == Rol.ROLE_CLIENTE
+                && autenticado.getUsuarioID() != usuarioID) {
+            throw new AccessDeniedException("No puedes consultar pedidos de otro usuario");
+        }
         if (!usuarioRepository.existsById(usuarioID)) {
             throw new ResourceNotFoundException("Usuario", usuarioID);
         }
@@ -159,6 +178,7 @@ public class PedidoServiceImpl implements IPedidoService {
     }
 
     @Override
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public List<PedidoResponseDto> listarPorEstado(String estado) {
         EstadoPedido estadoEnum = EstadoPedido.valueOf(estado.toUpperCase());
         return pedidoRepository.findByEstado(estadoEnum).stream()
@@ -168,6 +188,7 @@ public class PedidoServiceImpl implements IPedidoService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public PedidoResponseDto actualizarEstado(int id, PedidoUpdateDto dto) {
         Pedido pedido = obtenerPedidoOException(id);
         if (dto.getEstado() != null) {
@@ -189,9 +210,11 @@ public class PedidoServiceImpl implements IPedidoService {
     @Transactional
     public void cancelar(int id) {
         Pedido pedido = obtenerPedidoOException(id);
+
         if (pedido.getEstado() == EstadoPedido.ENTREGADO) {
             throw new BadRequestException("No se puede cancelar un pedido ya entregado");
         }
+
         if (pedido.getEstado() == EstadoPedido.CANCELADO) {
             throw new BadRequestException("El pedido ya está cancelado");
         }
@@ -218,6 +241,7 @@ public class PedidoServiceImpl implements IPedidoService {
 
     @Override
     @Transactional
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public PedidoResponseDto confirmarPedido(int pedidoID) {
         Pedido pedido = obtenerPedidoOException(pedidoID);
 

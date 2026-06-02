@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class DomicilioController {
 
     // POST /api/domicilios
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_CLIENTE')")
     public ResponseEntity<DomicilioResponseDto> crear(
             @Valid @RequestBody DomicilioRegistroDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(domicilioService.crear(dto));
@@ -28,18 +30,21 @@ public class DomicilioController {
 
     // GET /api/domicilios
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<DomicilioResponseDto>> listarTodos() {
         return ResponseEntity.ok(domicilioService.listarTodos());
     }
 
     // GET /api/domicilios/{id}
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<DomicilioResponseDto> obtenerPorId(@PathVariable int id) {
         return ResponseEntity.ok(domicilioService.obtenerPorId(id));
     }
 
     // PATCH /api/domicilios/{id}
     @PatchMapping("/{id}")
+        @PreAuthorize("hasRole('ROLE_CLIENTE')")
     public ResponseEntity<DomicilioResponseDto> update(
             @PathVariable int id,
             @Valid @RequestBody DomicilioUpdateDto dto) {
@@ -48,6 +53,7 @@ public class DomicilioController {
 
     // DELETE /api/domicilios/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_CLIENTE')")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
         domicilioService.eliminar(id);
         return ResponseEntity.noContent().build();

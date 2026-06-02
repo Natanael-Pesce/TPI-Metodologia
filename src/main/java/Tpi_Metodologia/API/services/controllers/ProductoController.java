@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class ProductoController {
 
     // POST /api/productos
     @PostMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ProductoResponseDto> crear(@Valid @RequestBody ProductoRegistroDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(productoService.crear(dto));
     }
@@ -48,12 +50,14 @@ public class ProductoController {
 
     // GET /api/productos/stock-bajo
     @GetMapping("/stock-bajo")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_VENDEDOR')")
     public ResponseEntity<List<ProductoResponseDto>> listarConStockBajo() {
         return ResponseEntity.ok(productoService.listarConStockBajo());
     }
 
     // PATCH /api/productos/{id}
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ProductoResponseDto> actualizar(
             @PathVariable int id,
             @Valid @RequestBody ProductoUpdateDto dto) {
@@ -62,6 +66,7 @@ public class ProductoController {
 
     // PATCH /api/productos/{id}/estado?activo=true
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<ProductoResponseDto> cambiarEstado(
             @PathVariable int id,
             @RequestParam boolean activo) {
@@ -70,6 +75,7 @@ public class ProductoController {
 
     // DELETE /api/productos/{id}
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> eliminar(@PathVariable int id) {
         productoService.eliminar(id);
         return ResponseEntity.noContent().build();

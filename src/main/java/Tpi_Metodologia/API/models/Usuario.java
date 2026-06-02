@@ -13,10 +13,16 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collection;
 import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import Tpi_Metodologia.API.utility.Rol;
 
@@ -26,7 +32,8 @@ import Tpi_Metodologia.API.utility.Rol;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Usuario {
+@Builder
+public class Usuario implements UserDetails {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,7 +49,7 @@ public class Usuario {
     private String contrasena;
 
     @Enumerated(EnumType.STRING)
-    private Rol rol = Rol.Cliente;
+    private Rol rol = Rol.ROLE_CLIENTE;
 
     @ManyToMany
     @JoinTable(
@@ -57,4 +64,39 @@ public class Usuario {
     private Cupon cupon;
 
     private String cuit;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(rol.name()));
+    }
+
+    @Override
+    public String getPassword() {
+        return contrasena;
+    }
+
+    @Override
+    public String getUsername() {
+        return correo;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
