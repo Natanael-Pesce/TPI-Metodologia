@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TPI Shop</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav id="navbar" class="navbar hidden">
+    <div class="nav-brand">🛒 Body Paint</div>
+    <div class="nav-links">
+      <!-- Cliente -->
+      <a href="#" class="nav-link role-cliente" onclick="showView('catalogo')">Catálogo</a>
+      <a href="#" class="nav-link role-cliente" onclick="showView('carrito')">
+        Carrito <span id="cart-badge" class="badge">0</span>
+      </a>
+      <a href="#" class="nav-link role-cliente" onclick="showView('mis-pedidos')">Mis Pedidos</a>
+      <!-- Vendedor -->
+      <a href="#" class="nav-link role-vendedor" onclick="showView('gestion-pedidos')">Pedidos</a>
+      <!-- Admin -->
+      <a href="#" class="nav-link role-admin" onclick="showView('admin-productos')">Productos</a>
+      <a href="#" class="nav-link role-admin" onclick="showView('gestion-pedidos')">Pedidos</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn btn-sm btn-outline" onclick="logout()">Salir</button>
+    </div>
+  </nav>
+
+  <!-- TOAST NOTIFICATIONS -->
+  <div id="toast-container"></div>
+
+  <!-- ===================== VIEWS ===================== -->
+  <main id="app">
+
+    <!-- ---- LOGIN / REGISTER ---- -->
+    <div id="view-auth" class="view active">
+      <div class="auth-container">
+        <div class="auth-card">
+          <h1 class="auth-title">🛒 Body Paint</h1>
+
+          <!-- Tabs -->
+          <div class="tab-bar">
+            <button class="tab active" onclick="switchAuthTab('login')">Iniciar sesión</button>
+            <button class="tab" onclick="switchAuthTab('register')">Registrarse</button>
+          </div>
+
+          <!-- Login Form -->
+          <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label>Correo</label>
+              <input type="email" id="login-correo" placeholder="tu@email.com" required />
+            </div>
+            <div class="form-group">
+              <label>Contraseña</label>
+              <input type="password" id="login-contrasena" placeholder="••••••••" required />
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="login-btn">
+              Iniciar sesión
+            </button>
+          </form>
+
+          <!-- Register Form -->
+          <form id="register-form" class="auth-form hidden" onsubmit="handleRegister(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="reg-nombre" placeholder="Juan" required />
+              </div>
+              <div class="form-group">
+                <label>Apellido</label>
+                <input type="text" id="reg-apellido" placeholder="Pérez" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Correo</label>
+              <input type="email" id="reg-correo" placeholder="juan@email.com" required />
+            </div>
+            <div class="form-group">
+              <label>Contraseña <small>(mínimo 6 caracteres)</small></label>
+              <input type="password" id="reg-contrasena" placeholder="••••••••" minlength="6" required />
+            </div>
+            <div class="form-group">
+              <label>CUIT <small>(opcional)</small></label>
+              <input type="text" id="reg-cuit" placeholder="20-12345678-1" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" id="register-btn">
+              Crear cuenta
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- CATÁLOGO (CLIENTE) ---- -->
+    <div id="view-catalogo" class="view hidden">
+      <div class="page-header">
+        <h2>Catálogo de Productos</h2>
+        <div class="search-bar">
+          <input type="text" id="search-productos" placeholder="Buscar productos..." oninput="filterProductos()" />
+        </div>
+      </div>
+      <div id="productos-grid" class="products-grid">
+        <div class="loading">Cargando productos...</div>
+      </div>
+    </div>
+
+    <!-- ---- CARRITO (CLIENTE) ---- -->
+    <div id="view-carrito" class="view hidden">
+      <div class="page-header">
+        <h2>Carrito de Compras</h2>
+        <button class="btn btn-outline" onclick="showView('catalogo')">← Seguir comprando</button>
+      </div>
+
+      <div class="cart-layout">
+        <div id="cart-items" class="cart-items">
+          <div class="empty-state">Tu carrito está vacío</div>
+        </div>
+
+        <div class="cart-summary">
+          <h3>Resumen del pedido</h3>
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="cart-subtotal">$0.00</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total</span>
+            <span id="cart-total">$0.00</span>
+          </div>
+
+          <div class="form-group">
+            <label>Domicilio de entrega</label>
+            <select id="cart-domicilio">
+              <option value="">-- Seleccionar domicilio --</option>
+            </select>
+            <button class="btn btn-sm btn-link" onclick="showAddDomicilioModal()">+ Agregar domicilio</button>
+          </div>
+
+          <div class="form-group">
+            <label>Cupón de descuento</label>
+            <div class="input-row">
+              <input type="text" id="cart-cupon" placeholder="Código de cupón" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="confirmarPedido()">
+            Confirmar pedido (Pago en efectivo)
+          </button>
+          <p class="hint">💵 Pago contra entrega en efectivo</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- MIS PEDIDOS (CLIENTE) ---- -->
+    <div id="view-mis-pedidos" class="view hidden">
+      <div class="page-header">
+        <h2>Mis Pedidos</h2>
+      </div>
+      <div id="mis-pedidos-list" class="pedidos-list">
+        <div class="loading">Cargando pedidos...</div>
+      </div>
+    </div>
+
+    <!-- ---- GESTIÓN PEDIDOS (VENDEDOR / ADMIN) ---- -->
+    <div id="view-gestion-pedidos" class="view hidden">
+      <div class="page-header">
+        <h2>Gestión de Pedidos</h2>
+        <div class="filter-bar">
+          <select id="filter-estado-pedido" onchange="loadPedidos()">
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="EN_PREPARACION">En preparación</option>
+            <option value="CONFIRMADO">Confirmado</option>
+            <option value="ENVIO">En envío</option>
+            <option value="ENTREGADO">Entregado</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+        </div>
+      </div>
+      <div id="pedidos-admin-list" class="pedidos-list">
+        <div class="loading">Cargando pedidos...</div>
+      </div>
+    </div>
+
+    <!-- ---- ADMIN PRODUCTOS ---- -->
+    <div id="view-admin-productos" class="view hidden">
+      <div class="page-header">
+        <h2>Administración de Productos</h2>
+        <button class="btn btn-primary" onclick="showProductoModal()">+ Nuevo producto</button>
+      </div>
+      <div id="admin-productos-list" class="products-table-wrap">
+        <div class="loading">Cargando productos...</div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ===================== MODALS ===================== -->
+
+  <!-- Add Address Modal -->
+  <div id="modal-domicilio" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal('modal-domicilio')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Agregar domicilio</h3>
+        <button class="modal-close" onclick="closeModal('modal-domicilio')">✕</button>
+      </div>
+      <form onsubmit="saveDomicilio(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label>País *</label>
+            <input type="text" id="dom-pais" placeholder="Argentina" required />
+          </div>
+          <div class="form-group">
+            <label>Provincia</label>
+            <input type="text" id="dom-provincia" placeholder="Córdoba" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ciudad *</label>
+          <input type="text" id="dom-ciudad" placeholder="Córdoba" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Calle *</label>
+            <input type="text" id="dom-calle" placeholder="Av. Colón" required />
+          </div>
+          <div class="form-group">
+            <label>Número</label>
+            <input type="text" id="dom-nro" placeholder="1234" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Piso</label>
+            <input type="text" id="dom-piso" placeholder="3" />
+          </div>
+          <div class="form-group">
+            <label>Departamento</label>
+            <input type="text" id="dom-depto" placeholder="B" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-domicilio')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create/Edit Producto Modal -->
+  <div id="modal-producto" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal('modal-producto')"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-producto-title">Nuevo Producto</h3>
+        <button class="modal-close" onclick="closeModal('modal-producto')">✕</button>
+      </div>
+      <form onsubmit="saveProducto(event)">
+        <input type="hidden" id="prod-id" />
+        <div class="form-group">
+          <label>Nombre del producto *</label>
+          <input type="text" id="prod-nombre" placeholder="Ej: Remera básica" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio *</label>
+            <input type="number" id="prod-precio" placeholder="0.00" min="0.01" step="0.01" required />
+          </div>
+          <div class="form-group">
+            <label>Stock *</label>
+            <input type="number" id="prod-stock" placeholder="0" min="0" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Stock mínimo</label>
+            <input type="number" id="prod-stockmin" placeholder="5" min="0" value="5" />
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="prod-activo">
+              <option value="true">Activo</option>
+              <option value="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>URL de imagen</label>
+          <input type="text" id="prod-imagen" placeholder="https://..." />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-producto')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="prod-save-btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div id="modal-pedido-detalle" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal('modal-pedido-detalle')"></div>
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3>Detalle del Pedido</h3>
+        <button class="modal-close" onclick="closeModal('modal-pedido-detalle')">✕</button>
+      </div>
+      <div id="pedido-detalle-body"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/catalogo.js"></script>
+  <script src="js/carrito.js"></script>
+  <script src="js/pedidos.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
